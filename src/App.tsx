@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 
 type Journey = {
@@ -138,7 +138,7 @@ const legacyProjects: LegacyProject[] = [
   {
     title: 'Pricing Panel',
     description: 'Simple responsive pricing panel UI.',
-    image: '/assets/museum_of_candy.png',
+    image: '/assets/pricing_panel.png',
     link: 'https://thesreeram.github.io/pricing_panel/',
   },
   {
@@ -179,6 +179,8 @@ const statConfig = [
   { label: 'Settlement Scale', count: 140, prefix: '$', suffix: 'M+' },
   { label: 'Migration Effort Saved', count: 70, suffix: '%' },
 ]
+
+const sectionOrder = ['hero', 'journey', 'bosses', 'skills', 'achievements', 'arcade', 'contact']
 
 function AnimatedStat({
   label,
@@ -227,8 +229,9 @@ function App() {
   const [selectedJourney, setSelectedJourney] = useState(journeyData[0].id)
   const [projectFilter, setProjectFilter] = useState('all')
   const [unlocked, setUnlocked] = useState<number[]>([])
-  const [scrollPercent, setScrollPercent] = useState(0)
   const [activeSection, setActiveSection] = useState('hero')
+  const [sectionProgress, setSectionProgress] = useState(0)
+  const visitedSections = useRef(new Set<string>())
 
   const addXp = (amount: number) => setXp((prev) => Math.min(100, prev + amount))
 
@@ -242,11 +245,28 @@ function App() {
     [selectedJourney],
   )
 
+  const level = useMemo(() => Math.min(10, Math.floor(xp / 10) + 1), [xp])
+  const questProgress = useMemo(
+    () => Math.min(100, Math.round(sectionProgress * 0.6 + xp * 0.4)),
+    [sectionProgress, xp],
+  )
+  const completedNodes = useMemo(
+    () => Math.max(1, Math.round((questProgress / 100) * (sectionOrder.length - 1)) + 1),
+    [questProgress],
+  )
+
+  const mascotMood = useMemo(() => {
+    if (xp >= 85) return 'elite'
+    if (activeSection === 'bosses') return 'combat'
+    if (activeSection === 'skills') return 'focus'
+    return 'idle'
+  }, [activeSection, xp])
+
   const guideMessage = useMemo(() => {
-    if (xp < 20) return 'Welcome to Cloud Quest. Explore the map and start unlocking quests.'
+    if (xp < 20) return 'Collect XP by exploring sections. The mascot now tracks your mission progress.'
     if (activeSection === 'bosses') return 'Boss zone active. Open strategies to inspect architecture decisions.'
     if (activeSection === 'skills') return 'Unlock skill nodes. Press U for instant full unlock.'
-    if (xp < 80) return 'Great progress. Keep collecting XP by interacting with cards and missions.'
+    if (xp < 80) return 'Great progress. Interact with cards to move your player faster on the quest track.'
     return 'Elite mode unlocked. Ready to recruit this engineer for your next platform mission.'
   }, [activeSection, xp])
 
@@ -272,12 +292,6 @@ function App() {
   }, [])
 
   useEffect(() => {
-    const onScroll = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      const value = max > 0 ? (window.scrollY / max) * 100 : 0
-      setScrollPercent(value)
-    }
-
     const onMove = (event: MouseEvent) => {
       const x = event.clientX / window.innerWidth
       const y = event.clientY / window.innerHeight
@@ -287,12 +301,12 @@ function App() {
       document.documentElement.style.setProperty('--orb-by', `${-y * 12}px`)
       document.documentElement.style.setProperty('--cursor-x', `${event.clientX}px`)
       document.documentElement.style.setProperty('--cursor-y', `${event.clientY}px`)
+      document.documentElement.style.setProperty('--mascot-lean', `${(x - 0.5) * 12}deg`)
     }
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key >= '1' && event.key <= '6') {
-        const ids = ['hero', 'journey', 'bosses', 'skills', 'arcade', 'contact']
-        const id = ids[Number(event.key) - 1]
+      if (event.key >= '1' && event.key <= '7') {
+        const id = sectionOrder[Number(event.key) - 1]
         document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
         addXp(2)
       }
@@ -302,12 +316,10 @@ function App() {
       }
     }
 
-    window.addEventListener('scroll', onScroll)
     window.addEventListener('mousemove', onMove)
     window.addEventListener('keydown', onKey)
 
     return () => {
-      window.removeEventListener('scroll', onScroll)
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('keydown', onKey)
     }
@@ -329,7 +341,19 @@ function App() {
     const sectionObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) setActiveSection(entry.target.id)
+          if (!entry.isIntersecting) return
+          const id = entry.target.id
+          setActiveSection(id)
+
+          const idx = sectionOrder.indexOf(id)
+          if (idx >= 0) {
+            setSectionProgress((idx / (sectionOrder.length - 1)) * 100)
+          }
+
+          if (!visitedSections.current.has(id)) {
+            visitedSections.current.add(id)
+            addXp(5)
+          }
         })
       },
       { threshold: 0.5 },
@@ -387,7 +411,7 @@ function App() {
             className="btn btn-primary"
             onClick={() => {
               setStarted(true)
-              addXp(6)
+              addXp(8)
             }}
           >
             Press Start
@@ -418,6 +442,9 @@ function App() {
           <a className={activeSection === 'skills' ? 'active' : ''} href="#skills">
             Skills
           </a>
+          <a className={activeSection === 'achievements' ? 'active' : ''} href="#achievements">
+            Achievements
+          </a>
           <a className={activeSection === 'arcade' ? 'active' : ''} href="#arcade">
             Arcade
           </a>
@@ -425,15 +452,26 @@ function App() {
             Contact
           </a>
         </nav>
-        <div className="xp-wrap">
-          <span>
-            XP {xp} / 100
-          </span>
-          <div className="xp-bar">
-            <span style={{ width: `${xp}%` }} />
+      </header>
+
+      <aside className="quest-console" aria-live="polite">
+        <div className="quest-head">
+          <strong>Player Mission</strong>
+          <span>LVL {level}</span>
+        </div>
+        <div className="quest-track">
+          {sectionOrder.map((id, idx) => (
+            <span key={id} className={`quest-node ${idx < completedNodes ? 'done' : ''}`} />
+          ))}
+          <div className={`quest-player mood-${mascotMood}`} style={{ left: `calc(${questProgress}% - 20px)` }}>
+            <span className="quest-eye left" />
+            <span className="quest-eye right" />
           </div>
         </div>
-      </header>
+        <p>
+          XP {xp}/100 | Progress {questProgress}%
+        </p>
+      </aside>
 
       <aside className="guide-character" aria-live="polite">
         <div className="guide-sprite" aria-hidden="true">
@@ -443,8 +481,6 @@ function App() {
         <p>{guideMessage}</p>
       </aside>
 
-      <div id="scroll-progress" style={{ width: `${scrollPercent}%` }} />
-
       <main>
         <section id="hero" className="panel hero">
           <div className="hero-copy">
@@ -452,9 +488,6 @@ function App() {
             <h1>Sreeram Panigrahi</h1>
             <p className="subtitle">Backend Engineer | AWS, Java, Spring Boot | Systems at Scale</p>
             <p>I build reliable, high-throughput backend systems and lead platform migrations with zero downtime.</p>
-            <div className="runner-track" aria-hidden="true">
-              <div className="runner" style={{ left: `calc(${scrollPercent}% - 14px)` }} />
-            </div>
             <div className="cta-row">
               <a className="btn btn-primary" href="#bosses">
                 Start Mission
@@ -647,7 +680,7 @@ function App() {
 
       <aside className="hotkeys">
         <p>
-          Hotkeys: <kbd>1</kbd>-<kbd>6</kbd> jump sections, <kbd>U</kbd> unlock skills
+          Hotkeys: <kbd>1</kbd>-<kbd>7</kbd> jump sections, <kbd>U</kbd> unlock skills
         </p>
       </aside>
     </>

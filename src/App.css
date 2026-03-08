@@ -17,6 +17,7 @@
   --orb-by: 0px;
   --cursor-x: 50vw;
   --cursor-y: 50vh;
+  --mascot-lean: 0deg;
 }
 
 * {
@@ -112,54 +113,6 @@ p {
   display: grid;
   gap: 8px;
   margin-bottom: 14px;
-}
-
-.runner-track {
-  position: relative;
-  height: 42px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgb(45 226 230 / 12%), rgb(193 255 114 / 13%));
-  border: 1px solid var(--border);
-  overflow: hidden;
-}
-
-.runner {
-  position: absolute;
-  top: 10px;
-  width: 26px;
-  height: 22px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, var(--accent), #43b5ff);
-  transition: left 0.3s ease;
-  animation: runner-bob 0.6s infinite alternate;
-}
-
-.runner::before,
-.runner::after {
-  content: '';
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  background: #041018;
-  border-radius: 50%;
-  top: 6px;
-}
-
-.runner::before {
-  left: 5px;
-}
-
-.runner::after {
-  right: 5px;
-}
-
-@keyframes runner-bob {
-  from {
-    transform: translateY(-1px);
-  }
-  to {
-    transform: translateY(2px);
-  }
 }
 
 .hero-stats {
@@ -276,7 +229,7 @@ p {
 .hud a {
   color: var(--muted);
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   border-bottom: 2px solid transparent;
 }
 
@@ -300,37 +253,124 @@ p {
   filter: invert(87%) sepia(53%) saturate(1308%) hue-rotate(139deg) brightness(96%) contrast(98%);
 }
 
-.xp-wrap {
-  min-width: 170px;
-  display: grid;
-  gap: 4px;
-  font-size: 0.75rem;
-}
-
-.xp-bar {
-  width: 100%;
-  height: 8px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: rgb(42 72 113 / 60%);
-}
-
-.xp-bar span {
-  display: block;
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--accent-2), var(--accent));
-  transition: width 0.5s ease;
-}
-
-#scroll-progress {
+.quest-console {
   position: fixed;
-  top: 0;
-  left: 0;
-  height: 3px;
-  width: 0%;
-  z-index: 50;
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  left: 18px;
+  top: 92px;
+  width: min(380px, 42vw);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgb(7 18 32 / 86%);
+  backdrop-filter: blur(8px);
+  padding: 10px;
+  z-index: 18;
+  display: grid;
+  gap: 9px;
+}
+
+.quest-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.quest-head span {
+  color: var(--accent-2);
+  font-weight: 700;
+}
+
+.quest-track {
+  position: relative;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: linear-gradient(90deg, rgb(45 226 230 / 10%), rgb(193 255 114 / 10%));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+}
+
+.quest-node {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgb(156 180 209 / 45%);
+}
+
+.quest-node.done {
+  background: var(--accent-2);
+  box-shadow: 0 0 10px rgb(193 255 114 / 50%);
+}
+
+.quest-player {
+  position: absolute;
+  top: 3px;
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #28c6ff, #8ad0ff);
+  transition: left 0.25s ease;
+  animation: mascot-walk 0.45s infinite alternate;
+  transform: rotate(var(--mascot-lean));
+  box-shadow: 0 0 12px rgb(45 226 230 / 45%);
+}
+
+.quest-player::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  bottom: -6px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgb(4 16 29 / 70%);
+}
+
+.quest-player.mood-combat {
+  background: linear-gradient(135deg, #5af0f4, #5ec0ff);
+  box-shadow: 0 0 14px rgb(45 226 230 / 65%);
+}
+
+.quest-player.mood-focus {
+  background: linear-gradient(135deg, #9ff58d, #66d8b3);
+}
+
+.quest-player.mood-elite {
+  background: linear-gradient(135deg, #e9ff7f, #6fffc7);
+  box-shadow: 0 0 16px rgb(193 255 114 / 65%);
+}
+
+.quest-eye {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #06131e;
+  top: 9px;
+}
+
+.quest-eye.left {
+  left: 7px;
+}
+
+.quest-eye.right {
+  right: 7px;
+}
+
+@keyframes mascot-walk {
+  from {
+    transform: translateY(-1px) rotate(var(--mascot-lean));
+  }
+  to {
+    transform: translateY(2px) rotate(var(--mascot-lean));
+  }
+}
+
+.quest-console p {
+  font-size: 0.76rem;
+  color: var(--muted);
 }
 
 .journey-grid {
@@ -699,11 +739,17 @@ kbd {
   will-change: transform;
 }
 
-@media (width <= 980px) {
+@media (width <= 1200px) {
   .hud nav {
     display: none;
   }
 
+  .quest-console {
+    width: min(320px, 70vw);
+  }
+}
+
+@media (width <= 980px) {
   .hero,
   .journey-grid {
     grid-template-columns: 1fr;
@@ -712,17 +758,15 @@ kbd {
   .project-grid,
   .achievement-grid,
   .skill-tree,
-  .legacy-grid {
+  .legacy-grid,
+  .hero-stats {
     grid-template-columns: 1fr;
-  }
-
-  .xp-wrap {
-    min-width: 120px;
   }
 
   .hotkeys,
   .guide-character,
-  .cursor-glow {
+  .cursor-glow,
+  .quest-console {
     display: none;
   }
 }
